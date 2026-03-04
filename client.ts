@@ -13,11 +13,9 @@ export interface EnhanceRequest {
 export interface VideoEnhanceRequest {
   model_name: string;
   video_url: string;
-  resolution: [number, number]; // [width, height] - required!
+  resolution: [number, number];
   extension: string;
   original_resolution?: [number, number];
-  fps?: number;
-  keep_audio?: boolean;
 }
 
 export interface EnhanceResponse {
@@ -88,7 +86,6 @@ export class HitPawClient {
       if (status.data.status === 'ERROR') {
         throw new Error('Job failed with ERROR status');
       }
-      // CONVERTING - keep waiting
       await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
       attempt++;
     }
@@ -162,42 +159,43 @@ export class HitPawClient {
     outputPath: string,
     options: {
       model?: string;
-      resolution?: [number, number]; // [width, height] - required!
+      resolution: [number, number];
       original_resolution?: [number, number];
       extension?: string;
-      fps?: number;
-      keepAudio?: boolean;
       pollInterval?: number;
       timeout?: number;
-    } = {}
+    }
   ): Promise<{ coins: number }> {
     const DEFAULT_MODEL = 'general_restore_2x';
-    const DEFAULT_RESOLUTION: [number, number] = [1920, 1080];
-    const DEFAULT_ORIGINAL_RESOLUTION: [number, number] | undefined = undefined;
+    const DEFAULT_EXTENSION = '.mp4';
 
     const {
       model = DEFAULT_MODEL,
-      resolution = DEFAULT_RESOLUTION,
-      extension = '.mp4',
-      original_resolution = DEFAULT_ORIGINAL_RESOLUTION,
-      fps,
-      keepAudio = true,
+      resolution,
+      extension = DEFAULT_EXTENSION,
+      original_resolution,
       pollInterval = 10,
       timeout = 600
     } = options;
 
+    if (!resolution) {
+      throw new Error('resolution is required for video enhancement (e.g., [1920, 1080])');
+    }
+
     console.log(`Submitting video enhancement with model: ${model}...`);
     console.log(`Target resolution: ${resolution[0]}x${resolution[1]}`);
 
-    const enhanceResp = await this.enhanceVideo({
+    const requestBody: VideoEnhanceRequest = {
       model_name: model,
       video_url: inputUrl,
       resolution,
-      extension,
-      original_resolution,
-      fps,
-      keep_audio: keepAudio
-    });
+      extension
+    };
+    if (original_resolution) {
+      requestBody.original_resolution = original_resolution;
+    }
+
+    const enhanceResp = await this.enhanceVideo(requestBody);
 
     if (enhanceResp.code !== 200) {
       throw new Error(`Video enhance failed: ${enhanceResp.message}`);
