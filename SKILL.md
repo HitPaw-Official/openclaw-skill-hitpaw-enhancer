@@ -1,7 +1,7 @@
 ---
 name: hitpaw-image-enhancer
 description: Enhance images and videos using HitPaw's AI enhancement API
-version: 1.1.0
+version: 1.2.0
 author: Nova (HitPaw-Official)
 type: cli
 entry: dist/cli.js
@@ -53,12 +53,11 @@ A powerful OpenClaw skill that integrates HitPaw's state-of-the-art AI enhanceme
 - ⚙️ **Configurable DPI** and EXIF preservation
 
 ### Video Enhancement
-- 🎬 **Upscale videos 2x or 4x**
-- 🎨 **Colorize** black & white videos
-- 🌊 **Denoise** and **smooth** video
-- 🎯 **Multiple specialized models** for different needs
-- ⏱️ **Long-running job support** with extended polling
+- 🎬 **Upscale videos** to higher resolutions
+- 🤖 **Multiple AI models** for different use cases
 - 🎵 **Audio preservation** option
+- ⏱️ **Long-running job support** with extended polling
+- 📥 **Automatic download** when complete
 
 ## Installation
 
@@ -137,40 +136,52 @@ done
 
 ## Usage: `enhance-video`
 
+### ⚠️ Important Notes
+
+- **Resolution is required** (`--resolution` or `-r`). Must be in `WIDTHxHEIGHT` format (e.g., `1920x1080`).
+- Ensure target resolution does **not exceed max output resolution** (36 MP total pixels) per API limits.
+- Video processing can take **minutes to hours** depending on length. Use `--timeout` to extend if needed.
+- Input video must be at a **publicly accessible URL** (local files not directly supported).
+
 ### Command Line Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--url`, `-u` | string | **required** | URL of the video to enhance |
 | `--output`, `-o` | string | `output.mp4` | Output file path |
-| `--model`, `-m` | string | `upscale_2x` | Video model (see below) |
+| `--model`, `-m` | string | `general_restore_2x` | Video model (see below) |
+| `--resolution`, `-r` | string | **required** | Target resolution in WxH (e.g., `1920x1080`) |
+| `--original-resolution` | string | — | Original resolution (e.g., `1280x720`) - optional |
 | `--extension`, `-e` | string | `.mp4` | Output extension (`.mp4`, `.mov`, `.avi`) |
 | `--fps` | number | — | Target FPS (preserves original if omitted) |
 | `--keep-audio` | boolean | true | Preserve audio track |
 | `--poll-interval` | number | 10 | Polling interval in seconds |
-| `--timeout` | number | 600 | Maximum wait time in seconds (videos take longer) |
+| `--timeout` | number | 600 | Maximum wait time in seconds |
 
 #### Available Video Models
 
-| Model | Type | Best For |
-|-------|------|----------|
-| `upscale_2x` / `upscale_4x` | Upscaling | Increase resolution 2x/4x |
-| `colorize` | Colorization | Add color to black & white videos |
-| `denoise` | Denoising | Remove noise and artifacts |
-| `smooth` | Smoothing | Reduce jitter and improve clarity |
-| `stabilize` | Stabilization | Reduce camera shake (if supported) |
+| Model | Description | Use Case |
+|-------|-------------|----------|
+| `general_restore_1x` / `2x` / `4x` | General video restoration | General upscaling |
+| `face_soft_2x` | Face-softening enhancement | Portrait videos |
+| `portrait_restore_1x` / `2x` | Portrait restoration | Face-focused content |
+| `ultrahd_restore_2x` | Ultra HD upscaling | Highest quality upscale |
+| `generative_1x` | Generative fill | AI-powered restoration |
 
 #### Examples
 
 ```bash
-# Upscale video 2x
-enhance-video -u input.mp4 -o upscaled_2x.mp4 -m upscale_2x
+# Upscale to 1080p using general_restore_2x
+enhance-video -u input.mp4 -o output_1080p.mp4 -m general_restore_2x -r 1920x1080
 
-# Denoise and keep audio
-enhance-video -u noisy.mov -m denoise -o clean.mp4 --keep-audio
+# Upscale to 4K with specific original resolution
+enhance-video -u clip.mov -o 4k.mov -m general_restore_4x -r 3840x2160 --original-resolution 1920x1080
 
-# Colorize B&W video
-enhance-video -u bw_video.avi -m colorize -o colorized.mp4 -e .mp4
+# Denoise with portrait model
+enhance-video -u portrait_video.avi -m portrait_restore_2x -r 1920x1080 -o clean_portrait.mp4
+
+# Add color to B&W (if generative model supports)
+enhance-video -u bw_vintage.mp4 -m generative_1x -r 1920x1080 -o colorized.mp4
 ```
 
 ---
@@ -183,11 +194,11 @@ enhance-video -u bw_video.avi -m colorize -o colorized.mp4 -e .mp4
 - Generative models: **~100+ coins** per image
 
 ### Video Enhancement
-- Upscale (2x/4x): **~200-400 coins** per minute of video
-- Colorize/Denoise/Smooth: **~150-300 coins** per minute
-- Prices vary by length and model; see HitPaw Playground for current rates.
+Coin costs depend on video length, model, and resolution. Approximate rates:
+- Upscale models: **~200-400 coins** per minute
+- Restoration models: **~150-300 coins** per minute
 
-Check your balance: https://playground.hitpaw.com/
+**Always check current rates** at: https://playground.hitpaw.com/
 
 ---
 
@@ -200,19 +211,47 @@ Common errors and solutions:
 | `Invalid API key` | Wrong or expired key | Update `HITPAW_API_KEY` |
 | `Insufficient coins` | Account balance too low | Top up at HitPaw Playground |
 | `Unsupported model` | Model name typo or not available | Check model table above |
-| `Invalid extension` | Output format not supported | Use `.jpg/.png/.webp` for images, `.mp4/.mov/.avi` for videos |
-| `Rate limit exceeded` | Too many requests | Wait and retry |
-| `Video processing failed` | Corrupt video or unsupported codec | Try different input format |
+| `Invalid extension` | Output format not supported | Use `.jpg/.png/.webp` for images; `.mp4/.mov/.avi` for videos |
+| `Invalid video URL` | URL not publicly accessible | Ensure video is reachable via HTTPS |
+| `Input/target resolution over limit` | Exceeds 36 MP total pixels (e.g., 7680x4320 = ~33 MP) | Reduce resolution |
+| `Video duration over limit` | Video longer than 1 hour | Trim video first |
+| `Rate limit exceeded` | Too many requests | Wait and retry with exponential backoff |
+| `Video processing failed` | Corrupt video or unsupported codec | Try different input format or re-encode |
 
 ---
 
-## Technical Notes
+## Technical Details
 
-- Both image and video jobs are **asynchronous**: submit → poll → download.
-- For video, default timeout is 600s (10 min). Longer videos may need `--timeout` increase.
-- Video processing time depends on length and resolution; could take minutes to hours for long videos.
-- Output quality depends on input; very low-quality sources may have limited improvement.
-- Network interruption after job submission: you can resume by polling `job_id` manually (not implemented in this skill yet).
+### API Compatibility
+
+This skill implements the official HitPaw API as documented:
+- **Base URL**: `https://api-base.hitpaw.com`
+- **Image endpoint**: `POST /api/photo-enhancer`
+- **Video endpoint**: `POST /api/video-enhancer`
+- **Status endpoint**: `POST /api/task-status`
+
+Both endpoints return a `job_id`. Use the status endpoint to poll until `COMPLETED`, then download from `res_url`.
+
+### Polling Strategy
+
+- **Images**: default poll every 5s, timeout 300s (5 min)
+- **Videos**: default poll every 10s, timeout 600s (10 min)
+
+For longer videos, increase `--timeout` as needed (e.g., `--timeout 3600` for 1 hour).
+
+### Resolution Handling
+
+For videos, `resolution` is **required**. Choose based on your needs:
+- Keep original size? Set `resolution` to original dimensions (use `--original-resolution` for better quality).
+- Upscale? Multiply original width/height by factor (2x, 4x).
+- Downscale? Rare but possible; just specify smaller dimensions.
+
+**Max output**: 36 megapixels total (width × height ≤ 36,000,000 pixels).  
+Examples: 3840×2160 = 8.3 MP ✅, 7680×4320 = 33.2 MP ✅, 8192×4608 = 37.7 MP ❌.
+
+### Audio Preservation
+
+By default, `enhance-video` keeps the audio track (`--keep-audio`, default true). Use `--no-keep-audio` to strip audio.
 
 ---
 
@@ -223,7 +262,7 @@ Common errors and solutions:
 - Playground: https://playground.hitpaw.com/
 - Contact: support@hitpaw.com
 
-This skill is an **unofficial integration** with HitPaw API. You are responsible for your own API key and associated costs.
+This skill is an **unofficial integration** with HitPaw API. You must have a valid API key and comply with HitPaw's terms. The skill author is not responsible for any charges incurred.
 
 ## License
 
