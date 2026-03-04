@@ -14,6 +14,7 @@ keywords:
   - hitpaw
   - ai
 license: MIT
+---
 
 capabilities:
   - image_enhancement
