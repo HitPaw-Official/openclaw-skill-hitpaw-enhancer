@@ -16,8 +16,10 @@ program
 program
   .option('-u, --url <url>', 'URL or local file path of the video')
   .option('-o, --output <path>', 'Output file path', 'output.mp4')
-  .option('-m, --model <model>', 'Enhancement model', 'upscale_2x')
+  .option('-m, --model <model>', 'Enhancement model (see models table below)', 'general_restore_2x')
+  .option('-r, --resolution <wxh>', 'Target resolution (e.g., 1920x1080)', '1920x1080')
   .option('-e, --extension <ext>', 'Output extension (e.g., .mp4, .mov, .avi)', '.mp4')
+  .option('--original-resolution <wxh>', 'Original video resolution (optional, e.g., 1280x720)')
   .option('--fps <number>', 'Target FPS for output (optional)')
   .option('--no-keep-audio', 'Discard audio track', false)
   .option('--poll-interval <seconds>', 'Polling interval (default 10s for video)', '10')
@@ -31,7 +33,17 @@ program
       process.exit(1);
     }
 
-    const { url, output, model, extension, fps, keepAudio, pollInterval, timeout } = options;
+    const { url, output, model, resolution, extension, original_resolution, fps, keepAudio, pollInterval, timeout } = options;
+
+    // Parse resolution strings
+    const parseRes = (str: string): [number, number] => {
+      const [w, h] = str.split('x').map(Number);
+      if (!w || !h) throw new Error(`Invalid resolution format: ${str}. Use WxH (e.g., 1920x1080)`);
+      return [w, h];
+    };
+
+    const targetRes = parseRes(resolution);
+    const originalRes = original_resolution ? parseRes(original_resolution) : undefined;
 
     if (fs.existsSync(url)) {
       console.error(chalk.red('Error: Local file paths are not directly supported.'));
@@ -46,7 +58,9 @@ program
     try {
       const result = await client.enhanceVideoAndDownload(url, output, {
         model,
+        resolution: targetRes,
         extension,
+        original_resolution: originalRes,
         fps: fps ? parseInt(fps) : undefined,
         keepAudio,
         pollInterval: parseInt(pollInterval),
@@ -67,8 +81,11 @@ program
           110402000: 'Insufficient coins',
           110400005: 'Unsupported model',
           110400007: 'Invalid extension',
-          100429000: 'Rate limit exceeded',
-          110400006: 'Video processing failed'
+          110400008: 'Invalid video URL',
+          110400009: 'Input resolution over limit',
+          110400010: 'Target resolution over limit',
+          110400011: 'Video duration over limit',
+          100429000: 'Rate limit exceeded'
         };
         console.error(chalk.yellow(`Error code ${code}: ${messages[code] || 'See documentation'}`));
       }
