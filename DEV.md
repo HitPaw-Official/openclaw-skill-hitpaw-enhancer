@@ -1,43 +1,60 @@
-git clone https://github.com/HitPaw-Official/openclaw-skill-hitpaw-enhancer.git
-cd openclaw-skill-hitpaw-enhancer
-npm install
-npm run build
+# Development Guide
 
-# Set your API key
-export HITPAW_API_KEY="your_key_here"
-
-# Use the CLI directly
-node dist/cli.js -u https://example.com/image.jpg -o enhanced.jpg -m general_2x
-
-# Or install globally for convenience
-npm link
-enhance-image -u image.jpg -m face_2x -o enhanced.jpg
-```
-
-## Development
+## Build
 
 ```bash
-# Build TypeScript
+npm install
 npm run build
-
-# Run directly
-npm start -- -u <url> -o output.jpg
 ```
 
-## Publishing to ClawHub
+This compiles TypeScript to JavaScript in the `dist/` directory.
+
+## Test
+
+### Images
+
+```bash
+export HITPAW_API_KEY=your_key
+node dist/cli.js -u https://example.com/photo.jpg -o out.jpg -m general_2x
+```
+
+### Videos
+
+```bash
+export HITPAW_API_KEY=your_key
+node dist/video-cli.js -u https://example.com/video.mp4 -o out.mp4 -m upscale_2x
+```
+
+## CLI Commands
+
+- `enhance-image` - image enhancement (main entry)
+- `enhance-video` - video enhancement
+
+Options for both commands are similar; see `--help` for details.
+
+## Publish to ClawHub
 
 ```bash
 clawhub login
 clawhub publish .
 ```
 
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes and ensure `npm run build` passes
+4. Submit a Pull Request
+
+---
+
+## Notes
+
+- Video API may not be fully documented; models listed based on HitPaw product pages.
+- If API returns `Unsupported model`, check the official docs for latest model names.
+- Video jobs can take a long time; adjust `--timeout` accordingly.
+- Always test with a small video first to estimate coin consumption.
+
 ## Disclaimer
 
-This skill is an unofficial integration with HitPaw API. You are responsible for:
-- Your own HitPaw API key and associated costs
-- Compliance with HitPaw's terms of service
-- Images you submit (ensure you have rights)
-
-## License
-
-MIT © HitPaw-Official
+This skill integrates with HitPaw API. You must have a valid API key and comply with HitPaw's terms. The skill author is not responsible for any charges incurred.
