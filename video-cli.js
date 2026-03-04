@@ -17,11 +17,9 @@ program
   .option('-u, --url <url>', 'URL or local file path of the video')
   .option('-o, --output <path>', 'Output file path', 'output.mp4')
   .option('-m, --model <model>', 'Enhancement model (see models table below)', 'general_restore_2x')
-  .option('-r, --resolution <wxh>', 'Target resolution (e.g., 1920x1080)', '1920x1080')
+  .option('-r, --resolution <wxh>', 'Target resolution (required, e.g., 1920x1080)')
   .option('-e, --extension <ext>', 'Output extension (e.g., .mp4, .mov, .avi)', '.mp4')
   .option('--original-resolution <wxh>', 'Original video resolution (optional, e.g., 1280x720)')
-  .option('--fps <number>', 'Target FPS for output (optional)')
-  .option('--no-keep-audio', 'Discard audio track', false)
   .option('--poll-interval <seconds>', 'Polling interval (default 10s for video)', '10')
   .option('--timeout <seconds>', 'Max wait time (default 600s for video)', '600')
   .requiredOption('-u, --url <url>', 'Video URL or local file path')
@@ -33,7 +31,7 @@ program
       process.exit(1);
     }
 
-    const { url, output, model, resolution, extension, original_resolution, fps, keepAudio, pollInterval, timeout } = options;
+    const { url, output, model, resolution, extension, original_resolution, pollInterval, timeout } = options;
 
     // Parse resolution strings
     const parseRes = (str: string): [number, number] => {
@@ -41,6 +39,12 @@ program
       if (!w || !h) throw new Error(`Invalid resolution format: ${str}. Use WxH (e.g., 1920x1080)`);
       return [w, h];
     };
+
+    if (!resolution) {
+      console.error(chalk.red('Error: --resolution (-r) is required for video enhancement'));
+      console.log(chalk.yellow('Example: -r 1920x1080'));
+      process.exit(1);
+    }
 
     const targetRes = parseRes(resolution);
     const originalRes = original_resolution ? parseRes(original_resolution) : undefined;
@@ -61,8 +65,6 @@ program
         resolution: targetRes,
         extension,
         original_resolution: originalRes,
-        fps: fps ? parseInt(fps) : undefined,
-        keepAudio,
         pollInterval: parseInt(pollInterval),
         timeout: parseInt(timeout)
       });
