@@ -14,15 +14,12 @@ keywords:
   - hitpaw
   - ai
 license: MIT
----
-
 capabilities:
   - image_enhancement
   - image_upscaling
   - photo_enhance
   - video_enhancement
   - video_upscaling
-
 requirements:
   node: >=18
   packages:
@@ -31,13 +28,11 @@ requirements:
     - ora
     - chalk
     - fs-extra
-
 environment:
   variables:
     - HITPAW_API_KEY
       description: Your HitPaw API key
       required: true
-
 ---
 
 # HitPaw Image & Video Enhancer Skill
