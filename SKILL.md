@@ -21,7 +21,7 @@ capabilities:
   - video_enhancement
   - video_upscaling
 requirements:
-  node: >=18
+  node: ">=18"
   packages:
     - axios
     - commander
@@ -30,7 +30,7 @@ requirements:
     - fs-extra
 environment:
   variables:
-    - HITPAW_API_KEY
+    - name: HITPAW_API_KEY
       description: Your HitPaw API key
       required: true
 ---
