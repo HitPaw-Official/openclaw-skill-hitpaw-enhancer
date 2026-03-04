@@ -10,6 +10,14 @@ export interface EnhanceRequest {
   DPI?: number;
 }
 
+export interface VideoEnhanceRequest {
+  model_name: string;
+  video_url: string;
+  extension: string;
+  fps?: number;
+  keep_audio?: boolean;
+}
+
 export interface EnhanceResponse {
   code: number;
   message: string;
@@ -44,21 +52,29 @@ export class HitPawClient {
         'Content-Type': 'application/json',
         'Apikey': apiKey
       },
-      timeout: 30000
+      timeout: 60000
     });
   }
 
+  // === PHOTO ENHANCEMENT ===
   async enhancePhoto(params: EnhanceRequest): Promise<EnhanceResponse> {
     const response = await this.client.post('/api/photo-enhancer', params);
     return response.data as EnhanceResponse;
   }
 
+  // === VIDEO ENHANCEMENT ===
+  async enhanceVideo(params: VideoEnhanceRequest): Promise<EnhanceResponse> {
+    const response = await this.client.post('/api/video-enhancer', params);
+    return response.data as EnhanceResponse;
+  }
+
+  // === COMMON ===
   async checkStatus(jobId: string): Promise<StatusResponse> {
     const response = await this.client.post<StatusResponse>('/api/task-status', { job_id: jobId });
     return response.data;
   }
 
-  async waitForCompletion(jobId: string, maxAttempts = 120, pollInterval = 5): Promise<StatusResponse> {
+  async waitForCompletion(jobId: string, maxAttempts = 360, pollInterval = 10): Promise<StatusResponse> {
     let attempt = 0;
     while (attempt < maxAttempts) {
       const status = await this.checkStatus(jobId);
@@ -87,6 +103,7 @@ export class HitPawClient {
     });
   }
 
+  // === PHOTO HELPER ===
   async enhanceAndDownload(
     inputUrl: string,
     outputPath: string,
@@ -108,7 +125,7 @@ export class HitPawClient {
       timeout = 300
     } = options;
 
-    console.log(`Submitting enhancement job with model: ${model}...`);
+    console.log(`Submitting photo enhancement with model: ${model}...`);
     const enhanceResp = await this.enhancePhoto({
       model_name: model,
       img_url: inputUrl,
@@ -121,19 +138,69 @@ export class HitPawClient {
       throw new Error(`Enhance request failed: ${enhanceResp.message}`);
     }
 
-    console.log(`Job submitted. ID: ${enhanceResp.data.job_id}`);
-    console.log(`Coins will be consumed: ${enhanceResp.data.consume_coins}`);
+    console.log(`Job ID: ${enhanceResp.data.job_id}`);
+    console.log(`Coins: ${enhanceResp.data.consume_coins}`);
 
-    // Wait for completion
     const status = await this.waitForCompletion(enhanceResp.data.job_id, Math.floor(timeout / pollInterval), pollInterval);
 
     if (!status.data.res_url) {
       throw new Error('No result URL in status response');
     }
 
-    console.log(`Job completed! Downloading result to ${outputPath}...`);
+    console.log(`Downloading to ${outputPath}...`);
     await this.downloadResult(status.data.res_url, outputPath);
-    console.log('✅ Download complete!');
+    console.log('✅ Photo enhancement complete!');
+
+    return { coins: enhanceResp.data.consume_coins };
+  }
+
+  // === VIDEO HELPER ===
+  async enhanceVideoAndDownload(
+    inputUrl: string,
+    outputPath: string,
+    options: {
+      model?: string;
+      extension?: string;
+      fps?: number;
+      keepAudio?: boolean;
+      pollInterval?: number;
+      timeout?: number;
+    } = {}
+  ): Promise<{ coins: number }> {
+    const {
+      model = 'upscale_2x',
+      extension = '.mp4',
+      fps,
+      keepAudio = true,
+      pollInterval = 10,
+      timeout = 600
+    } = options;
+
+    console.log(`Submitting video enhancement with model: ${model}...`);
+    const enhanceResp = await this.enhanceVideo({
+      model_name: model,
+      video_url: inputUrl,
+      extension,
+      fps,
+      keep_audio: keepAudio
+    });
+
+    if (enhanceResp.code !== 200) {
+      throw new Error(`Video enhance failed: ${enhanceResp.message}`);
+    }
+
+    console.log(`Job ID: ${enhanceResp.data.job_id}`);
+    console.log(`Coins: ${enhanceResp.data.consume_coins}`);
+
+    const status = await this.waitForCompletion(enhanceResp.data.job_id, Math.floor(timeout / pollInterval), pollInterval);
+
+    if (!status.data.res_url) {
+      throw new Error('No result URL in status response');
+    }
+
+    console.log(`Downloading enhanced video to ${outputPath}...`);
+    await this.downloadResult(status.data.res_url, outputPath);
+    console.log('✅ Video enhancement complete!');
 
     return { coins: enhanceResp.data.consume_coins };
   }
