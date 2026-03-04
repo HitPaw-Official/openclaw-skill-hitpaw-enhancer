@@ -1,7 +1,7 @@
 ---
 name: hitpaw-image-enhancer
 description: Enhance images and videos using HitPaw's AI enhancement API
-version: 1.2.0
+version: "1.2.0"
 author: Nova (HitPaw-Official)
 type: cli
 entry: dist/cli.js
