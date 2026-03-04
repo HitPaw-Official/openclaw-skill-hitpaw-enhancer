@@ -1,22 +1,25 @@
 {
   "name": "openclaw-skill-hitpaw-enhancer",
   "version": "1.0.0",
-  "description": "HitPaw Image Enhancement Skill for OpenClaw",
+  "description": "HitPaw Image & Video Enhancement Skill for OpenClaw",
   "main": "dist/cli.js",
   "type": "module",
   "bin": {
-    "enhance-image": "./dist/cli.js"
+    "enhance-image": "./dist/cli.js",
+    "enhance-video": "./dist/video-cli.js"
   },
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "start:video": "node dist/video-cli.js"
   },
   "keywords": [
     "openclaw",
     "skill",
     "hitpaw",
     "image",
+    "video",
     "enhancement",
     "upscale",
     "ai"
