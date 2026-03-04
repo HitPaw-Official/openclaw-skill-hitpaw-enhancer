@@ -13,7 +13,9 @@ export interface EnhanceRequest {
 export interface VideoEnhanceRequest {
   model_name: string;
   video_url: string;
+  resolution: [number, number]; // [width, height] - required!
   extension: string;
+  original_resolution?: [number, number];
   fps?: number;
   keep_audio?: boolean;
 }
@@ -160,6 +162,8 @@ export class HitPawClient {
     outputPath: string,
     options: {
       model?: string;
+      resolution?: [number, number]; // [width, height] - required!
+      original_resolution?: [number, number];
       extension?: string;
       fps?: number;
       keepAudio?: boolean;
@@ -167,9 +171,15 @@ export class HitPawClient {
       timeout?: number;
     } = {}
   ): Promise<{ coins: number }> {
+    const DEFAULT_MODEL = 'general_restore_2x';
+    const DEFAULT_RESOLUTION: [number, number] = [1920, 1080];
+    const DEFAULT_ORIGINAL_RESOLUTION: [number, number] | undefined = undefined;
+
     const {
-      model = 'upscale_2x',
+      model = DEFAULT_MODEL,
+      resolution = DEFAULT_RESOLUTION,
       extension = '.mp4',
+      original_resolution = DEFAULT_ORIGINAL_RESOLUTION,
       fps,
       keepAudio = true,
       pollInterval = 10,
@@ -177,10 +187,14 @@ export class HitPawClient {
     } = options;
 
     console.log(`Submitting video enhancement with model: ${model}...`);
+    console.log(`Target resolution: ${resolution[0]}x${resolution[1]}`);
+
     const enhanceResp = await this.enhanceVideo({
       model_name: model,
       video_url: inputUrl,
+      resolution,
       extension,
+      original_resolution,
       fps,
       keep_audio: keepAudio
     });
