@@ -58,14 +58,14 @@ program
       spinner.succeed(chalk.green('Enhancement complete!'));
       console.log(`Output: ${path.resolve(output)}`);
       console.log(`Coins consumed: ${result.coins}`);
-    } catch (error: any) {
+    } catch (error) {
       spinner.fail(chalk.red('Enhancement failed'));
       console.error(chalk.red(error.message || 'Unknown error'));
 
       // Parse error response
       if (error.response?.data?.error_code) {
         const code = error.response.data.error_code;
-        const messages: Record<number, string> = {
+        const messages = {
           110400000: 'Invalid API key',
           110402000: 'Insufficient coins',
           110400005: 'Unsupported model',
